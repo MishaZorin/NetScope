@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MetricsModule } from './metrics/metrics.module';
 import { ServersModule } from './servers/servers.module';
+import { TopologyModule } from './topology/topology.module';
 
 @Module({
   imports: [
@@ -33,6 +34,9 @@ import { ServersModule } from './servers/servers.module';
     
    
     ServersModule,
+    
+   
+    TopologyModule,
 
    
    
