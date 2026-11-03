@@ -12,6 +12,15 @@ create(@Body() dto: CreateServerDto) {
 
   return this.serversService.create(dto);
 }
+@Get('load')
+  async findAll() {
+    return await this.serversService.findAll();
+  }
+  @Delete(':id')
+remove(@Param('id') id: string) {
+  return this.serversService.remove(id); 
+}
+
 
 
 

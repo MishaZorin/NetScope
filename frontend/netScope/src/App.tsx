@@ -17,8 +17,9 @@ interface Server {
   username: string;
   port: number;
   authType: 'password' | 'key';
+  password?: string;
+  privateKey?: string;
 }
-
 const initialNodes = [
   { id: 'n1', position: { x: 250, y: 50 }, data: { label: 'Ubuntu' } },
   { id: 'n2', position: { x: 100, y: 200 }, data: { label: 'Nginx' } },
@@ -66,13 +67,13 @@ export default function App() {
     []
   );
 
- 
+
   const loadServers = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const res = await fetch(`${API_URL}/servers`);
+      const res = await fetch(`${API_URL}/servers/load`);
 
       if (!res.ok) {
         throw new Error(`Ошибка загрузки: ${res.status}`);
@@ -90,12 +91,12 @@ export default function App() {
     }
   };
 
-  
+
   useEffect(() => {
     void loadServers();
   }, []);
 
-  
+
   const handleAddServer = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -126,10 +127,16 @@ export default function App() {
 
       const savedServer: Server = await res.json();
 
-      // Добавляем сохранённый сервер в список
-      setServers((prev) => [...prev, savedServer]);
+      setServers((prev) => [
+        ...prev,
+        {
+          ...savedServer,
+          password: authType === 'password' ? secret : undefined,
+          privateKey: authType === 'key' ? secret : undefined,
+        },
+      ]);
 
-    
+
       setHost('');
       setUsername('');
       setSecret('');
@@ -144,6 +151,72 @@ export default function App() {
       setLoading(false);
     }
   };
+
+
+  const getTopologyMap = async (server: Server) => {
+  try {
+    setError('');
+
+    const res = await fetch(`${API_URL}/metrics`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        host: server.host,
+        username: server.username,
+        port: server.port,
+        authType: server.authType,
+        password: server.password,
+        privateKey: server.privateKey,
+      }),
+    });
+
+    const raw = await res.text();
+
+    console.log('HTTP STATUS:', res.status);
+    console.log('RAW RESPONSE:', raw);
+
+    if (!res.ok) {
+      throw new Error(`Ошибка загрузки: ${res.status}`);
+    }
+
+    const data = JSON.parse(raw);
+
+    console.log('Topology:', data);
+  } catch (err) {
+    setError(
+      err instanceof Error ? err.message : 'Неизвестная ошибка'
+    );
+  }
+};
+  const handleDeleteServer = async (serverId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/servers/${serverId}`, {
+        method: "DELETE",
+
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+
+        throw new Error(
+          errorData.message || `Ошибка сервера: ${res.status}`
+        );
+      }
+
+      setServers(prev =>
+        prev.filter(server => server.id !== serverId)
+      );
+
+
+
+    } catch (error) {
+      console.error("Ошибка при удалении сервера:", error);
+    }
+  };
+
+
 
   return (
     <div className="app">
@@ -248,20 +321,29 @@ export default function App() {
           </button>
 
           {showServers && (
-            <div className="servers-list">
+            <div className="servers-list" >
 
               {servers.length === 0 ? (
                 <p className="empty-message">No servers added yet</p>
               ) : (
                 servers.map((server) => (
-                  <div className="server-item" key={server.id}>
+                  <div className="server-item" key={server.id} >
                     <div className="server-item-icon">▣</div>
+                    <button
+                      className="btn-secondary"
+                      onClick={() => getTopologyMap(server)}
+                    >
+                      Discover
+                    </button>
 
                     <div>
                       <p>{server.host}</p>
                       <span>
                         {server.username}@{server.host}:{server.port}
                       </span>
+                      <button className="btn-secondary" onClick={() => handleDeleteServer(server.id)}>
+                        Удалить
+                      </button>
                     </div>
                   </div>
                 ))

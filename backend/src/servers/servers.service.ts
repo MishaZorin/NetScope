@@ -10,18 +10,33 @@ export class ServersService {
   constructor(
     @InjectRepository(Server)
     private readonly repo: Repository<Server>,
-  ) {}
-    async create(dto: CreateServerDto) {
+  ) { }
+  async create(dto: CreateServerDto) {
     const server = this.repo.create({
       host: dto.host,
       port: dto.port ?? 22,
       username: dto.username,
       password: dto.password,
-      
+
     });
 
     const savedServer = await this.repo.save(server);
 
     return savedServer;
+  }
+   async findAll() {
+    return this.repo.find();
+  }
+   findOne(id: string) {
+    return this.repo.findOne({ where: { id} });
+  }
+  async remove(id: string) {
+    const server = await this.findOne(id);
+
+    if (!server) return null;
+
+    await this.repo.remove(server);
+
+    return server;
   }
 }
