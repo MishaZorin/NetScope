@@ -29,6 +29,13 @@ interface Response {
     status: string;
     ports: string[];
   }[];
+  networks: {
+    id:string,
+    name: string,
+    driver: string
+    containers: []
+
+  }[]
 }
 
 
@@ -180,25 +187,25 @@ export default function App() {
         }),
       });
 
-      
+
 
       if (!res.ok) {
         throw new Error(`Ошибка загрузки: ${res.status}`);
       }
 
-     const data: Response = await res.json();
-     setNodes(
-  data.containers.map((container, index) => ({
-    id: container.id,
-    position: {
-      x: 250 + (index % 3) * 200,
-      y: 50 + Math.floor(index / 3) * 150,
-    },
-    data: {
-      label: container.name,
-    },
-  }))
-);
+      const data: Response = await res.json();
+      setNodes(
+        data.containers.map((container, index) => ({
+          id: container.id,
+          position: {
+            x: 250 + (index % 3) * 200,
+            y: 50 + Math.floor(index / 3) * 150,
+          },
+          data: {
+            label: container.name,
+          },
+        }))
+      );
       console.log('Topology:', data);
     } catch (err) {
       setError(

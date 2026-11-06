@@ -67,7 +67,7 @@ export class MetricsService {
   }
 
   
-  async getDockerInfo(host: string, username: string, password: string) {
+async getDockerInfo(host: string, username: string, password: string) {
   const conn = await this.connectToServer(host, username, password);
 
   try {
@@ -76,9 +76,10 @@ export class MetricsService {
       "docker ps -a --format '{{json .}}'",
     );
 
-    if (!raw) {
-      return { containers: [] };
-    }
+    const rawNetworks = await this.execCommand(
+      conn,
+      'docker network inspect $(docker network ls -q)',
+    );
 
     const containers = raw
       .split('\n')
@@ -98,7 +99,23 @@ export class MetricsService {
         };
       });
 
-    return { containers };
+    const networks = JSON.parse(rawNetworks).map((network: any) => ({
+      id: network.Id,
+      name: network.Name,
+      driver: network.Driver,
+      containers: Object.entries(network.Containers || {}).map(
+        ([containerId, container]: [string, any]) => ({
+          id: containerId,
+          name: container.Name,
+          ipv4Address: container.IPv4Address,
+        }),
+      ),
+    }));
+
+    return {
+      containers,
+      networks,
+    };
 
   } finally {
     conn.end();
