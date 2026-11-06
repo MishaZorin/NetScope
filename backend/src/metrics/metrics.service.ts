@@ -66,120 +66,44 @@ export class MetricsService {
     });
   }
 
-  // Получение данных с Linux-сервера
-  async getNetwork(host: string, username: string, password: string) {
-    const conn = await this.connectToServer(host, username, password);
+  
+  async getDockerInfo(host: string, username: string, password: string) {
+  const conn = await this.connectToServer(host, username, password);
 
-    try {
-      const addressesRaw = await this.execCommand(conn, 'ip -j addr');
-      const routesRaw = await this.execCommand(conn, 'ip -j route');
-      const neighborsRaw = await this.execCommand(conn, 'ip -j neigh');
-      const socketsRaw = await this.execCommand(conn, 'ss -H -tuln');
+  try {
+    const raw = await this.execCommand(
+      conn,
+      "docker ps -a --format '{{json .}}'",
+    );
 
-      const rawData = {
-        addresses: JSON.parse(addressesRaw) as NetworkInterfaceRaw[],
-        routes: JSON.parse(routesRaw) as RouteRaw[],
-        neighbors: JSON.parse(neighborsRaw) as NeighborRaw[],
-        sockets: socketsRaw,
-      };
-
-      return this.normalizeNetworkData(rawData);
-    } finally {
-      conn.end();
+    if (!raw) {
+      return { containers: [] };
     }
-  }
 
-  normalizeNetworkData(data: {
-    addresses: NetworkInterfaceRaw[];
-    routes: RouteRaw[];
-    neighbors: NeighborRaw[];
-    sockets: string;
-  }) {
-    
-    const interfaces = data.addresses.map((item) => {
-      let type = 'other';
-
-      if (item.ifname === 'lo') {
-        type = 'loopback';
-      } else if (item.ifname.startsWith('br-') || item.ifname === 'docker0') {
-        type = 'docker-bridge';
-      } else if (item.ifname.startsWith('veth')) {
-        type = 'virtual-ethernet';
-      } else if (item.ifname.startsWith('wl')) {
-        type = 'wireless';
-      } else if (item.ifname.startsWith('en') || item.ifname.startsWith('eth')) {
-        type = 'ethernet';
-      }
-
-      return {
-        id: item.ifname,
-        name: item.ifname,
-        type,
-        status: item.operstate ?? 'UNKNOWN',
-        mac: item.address ?? null,
-        mtu: item.mtu ?? null,
-        master: item.master ?? null,
-
-        addresses: (item.addr_info ?? []).map((ip) => ({
-          address: ip.local,
-          version: ip.family,
-          prefix: ip.prefixlen,
-          scope: ip.scope,
-        })),
-      };
-    });
-
-   
-    const routes = data.routes.map((route, index) => ({
-      id: `route-${index}`,
-      destination: route.dst ?? 'default',
-      gateway: route.gateway ?? null,
-      interface: route.dev ?? null,
-      sourceAddress: route.prefsrc ?? null,
-      metric: route.metric ?? null,
-      protocol: route.protocol ?? null,
-      isDefault: !route.dst || route.dst === 'default',
-    }));
-
-
-    const neighbors = data.neighbors.map((neighbor, index) => ({
-      id: `neighbor-${index}`,
-      ip: neighbor.dst,
-      mac: neighbor.lladdr ?? null,
-      interface: neighbor.dev,
-      state: neighbor.state ?? [],
-    }));
-
-    const listeningPorts = data.sockets
+    const containers = raw
       .split('\n')
       .filter(Boolean)
       .map((line) => {
-        const parts = line.trim().split(/\s+/);
-        const protocol = parts[0];
-        const localAddress = parts[4];
+        const item = JSON.parse(line);
 
         return {
-          protocol,
-          address: localAddress,
-          port: localAddress?.split(':').pop() ?? null,
+          id: item.ID,
+          name: item.Names,
+          image: item.Image,
+          state: item.State,
+          status: item.Status,
+          ports: item.Ports
+            ? item.Ports.split(',').map((port: string) => port.trim())
+            : [],
         };
       });
 
-    return {
-      summary: {
-        interfacesCount: interfaces.length,
-        routesCount: routes.length,
-        neighborsCount: neighbors.length,
-        listeningPortsCount: listeningPorts.length,
-      },
+    return { containers };
 
-      interfaces,
-      routes,
-      neighbors,
-      listeningPorts,
-    };
+  } finally {
+    conn.end();
   }
-
+}
  
   connectToServer(
     host: string,

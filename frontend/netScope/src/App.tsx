@@ -8,7 +8,7 @@ import {
 
 import '@xyflow/react/dist/style.css';
 import './App.css';
-
+import type { Node } from '@xyflow/react';
 const API_URL = 'http://localhost:3000';
 
 interface Server {
@@ -20,11 +20,19 @@ interface Server {
   password?: string;
   privateKey?: string;
 }
-const initialNodes = [
-  { id: 'n1', position: { x: 250, y: 50 }, data: { label: 'Ubuntu' } },
-  { id: 'n2', position: { x: 100, y: 200 }, data: { label: 'Nginx' } },
-  { id: 'n3', position: { x: 400, y: 200 }, data: { label: 'Docker' } },
-];
+interface Response {
+  containers: {
+    id: string;
+    name: string;
+    image: string;
+    state: string;
+    status: string;
+    ports: string[];
+  }[];
+}
+
+
+const initialNodes: Node[] = [];
 
 const initialEdges = [
   { id: 'e1', source: 'n1', target: 'n2' },
@@ -154,42 +162,50 @@ export default function App() {
 
 
   const getTopologyMap = async (server: Server) => {
-  try {
-    setError('');
+    try {
+      setError('');
 
-    const res = await fetch(`${API_URL}/metrics`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        host: server.host,
-        username: server.username,
-        port: server.port,
-        authType: server.authType,
-        password: server.password,
-        privateKey: server.privateKey,
-      }),
-    });
+      const res = await fetch(`${API_URL}/metrics`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          host: server.host,
+          username: server.username,
+          port: server.port,
+          authType: server.authType,
+          password: server.password,
+          privateKey: server.privateKey,
+        }),
+      });
 
-    const raw = await res.text();
+      
 
-    console.log('HTTP STATUS:', res.status);
-    console.log('RAW RESPONSE:', raw);
+      if (!res.ok) {
+        throw new Error(`Ошибка загрузки: ${res.status}`);
+      }
 
-    if (!res.ok) {
-      throw new Error(`Ошибка загрузки: ${res.status}`);
+     const data: Response = await res.json();
+     setNodes(
+  data.containers.map((container, index) => ({
+    id: container.id,
+    position: {
+      x: 250 + (index % 3) * 200,
+      y: 50 + Math.floor(index / 3) * 150,
+    },
+    data: {
+      label: container.name,
+    },
+  }))
+);
+      console.log('Topology:', data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Неизвестная ошибка'
+      );
     }
-
-    const data = JSON.parse(raw);
-
-    console.log('Topology:', data);
-  } catch (err) {
-    setError(
-      err instanceof Error ? err.message : 'Неизвестная ошибка'
-    );
-  }
-};
+  };
   const handleDeleteServer = async (serverId: string) => {
     try {
       const res = await fetch(`${API_URL}/servers/${serverId}`, {

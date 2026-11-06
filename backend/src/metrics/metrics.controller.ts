@@ -13,7 +13,7 @@ export class MetricsController {
 
   @Post()
   getNetwork(@Body() dto: CheckConnectionDto) {
-    return this.metricsService.getNetwork(dto.host, dto.username, dto.password);
+    return this.metricsService.getDockerInfo(dto.host, dto.username, dto.password);
   }
 
   
