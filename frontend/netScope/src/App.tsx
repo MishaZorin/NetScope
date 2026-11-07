@@ -439,12 +439,7 @@ export default function App() {
               Docker Map
             </button>
 
-            <button
-              className="btn-secondary"
-              onClick={() => getDockerMap(server)}
-            >
-              Nginx Map
-            </button>
+            
             
 
           </div>
