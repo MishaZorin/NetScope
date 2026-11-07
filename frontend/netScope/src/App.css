@@ -1,6 +1,6 @@
 
-
 body {
+  margin: 0;
   background: #0b0e14;
   color: #e6edf3;
   font-family: Inter, Arial, sans-serif;
@@ -13,15 +13,38 @@ body {
   overflow: hidden;
 }
 
+/* SIDEBAR */
+
 .sidebar {
   width: 290px;
   min-width: 290px;
+  height: 100vh;
+  box-sizing: border-box;
   background: #11151d;
   border-right: 1px solid #252c38;
   display: flex;
   flex-direction: column;
   padding: 25px 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #30363d #11151d;
 }
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #484f58;
+}
+
+/* LOGO */
 
 .logo {
   display: flex;
@@ -29,6 +52,7 @@ body {
   gap: 12px;
   padding-bottom: 30px;
   border-bottom: 1px solid #252c38;
+  flex-shrink: 0;
 }
 
 .logo-icon {
@@ -52,8 +76,11 @@ body {
   color: #7d8999;
 }
 
+/* CONNECTION FORM */
+
 .sidebar-section {
   margin-top: 32px;
+  flex-shrink: 0;
 }
 
 .section-title {
@@ -77,8 +104,8 @@ body {
   margin-top: 5px;
 }
 
-.connection-form input, 
-.connection-form select, 
+.connection-form input,
+.connection-form select,
 .connection-form textarea {
   width: 100%;
   box-sizing: border-box;
@@ -93,14 +120,14 @@ body {
   transition: 0.2s;
 }
 
-.connection-form input:focus, 
-.connection-form select:focus, 
+.connection-form input:focus,
+.connection-form select:focus,
 .connection-form textarea:focus {
   border-color: #388bfd;
   box-shadow: 0 0 0 2px rgba(56, 139, 253, 0.12);
 }
 
-.connection-form input::placeholder, 
+.connection-form input::placeholder,
 .connection-form textarea::placeholder {
   color: #484f58;
 }
@@ -140,7 +167,9 @@ body {
   cursor: not-allowed;
 }
 
-.error-message, 
+/* MESSAGES */
+
+.error-message,
 .success-message {
   padding: 10px 12px;
   border-radius: 7px;
@@ -161,10 +190,13 @@ body {
   border: 1px solid rgba(46, 160, 67, 0.25);
 }
 
+/* SERVERS */
+
 .servers-section {
   margin-top: 28px;
   padding-top: 18px;
   border-top: 1px solid #21262d;
+  flex-shrink: 0;
 }
 
 .servers-toggle {
@@ -241,6 +273,11 @@ body {
   overflow-wrap: anywhere;
 }
 
+.server-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .empty-message {
   padding: 16px 10px;
   color: #6e7681;
@@ -250,14 +287,61 @@ body {
   border-radius: 8px;
 }
 
+/* DOCKER AND NETWORKS */
+
+.server-resources {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #252c38;
+}
+
+.resource-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resource-group h3 {
+  margin: 0 0 4px;
+  color: #8b949e;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.resource-item {
+  padding: 10px 12px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 7px;
+  color: #c9d1d9;
+  font-size: 12px;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.resource-item:hover {
+  background: #1c2128;
+  border-color: #388bfd;
+  color: #58a6ff;
+}
+
+/* CONNECTION STATUS */
+
 .connection-status {
   display: flex;
   align-items: center;
   gap: 9px;
-  margin-top: auto;
+  margin-top: 25px;
   padding-top: 20px;
+  border-top: 1px solid #252c38;
   color: #8b949e;
   font-size: 11px;
+  flex-shrink: 0;
 }
 
 .status-dot {
@@ -269,12 +353,18 @@ body {
   flex-shrink: 0;
 }
 
+/* MAIN */
+
 .main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
+
+/* TOPBAR */
 
 .topbar {
   height: 85px;
@@ -285,6 +375,7 @@ body {
   justify-content: space-between;
   padding: 0 30px;
   background: #11151d;
+  box-sizing: border-box;
 }
 
 .topbar h1 {
@@ -306,12 +397,15 @@ body {
   letter-spacing: 1px;
 }
 
+/* WORKSPACE */
+
 .workspace {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 25px 30px;
+  overflow: hidden;
 }
 
 .canvas-header {
@@ -319,6 +413,7 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .canvas-header h3 {
@@ -344,6 +439,8 @@ body {
   background: #222b38;
 }
 
+/* REACT FLOW */
+
 .flow-container {
   flex: 1;
   min-height: 0;
@@ -355,7 +452,7 @@ body {
 
 .react-flow__background {
   background-color: #0b0e14 !important;
-  background-image: 
+  background-image:
     radial-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 0),
     linear-gradient(to right, rgba(37, 99, 235, 0.02) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(37, 99, 235, 0.02) 1px, transparent 1px);
@@ -382,7 +479,7 @@ body {
   filter: drop-shadow(0px 0px 10px rgba(56, 139, 253, 0.8));
 }
 
-.react-flow__edge-path__animated, 
+.react-flow__edge-path__animated,
 .react-flow__edge.animated .react-flow__edge-path {
   stroke-dasharray: 8;
   animation: dash 0.8s linear infinite;
@@ -393,10 +490,13 @@ body {
   from {
     stroke-dashoffset: 16;
   }
+
   to {
     stroke-dashoffset: 0;
   }
 }
+
+/* HANDLES */
 
 .react-flow__handle {
   width: 10px !important;
@@ -421,9 +521,16 @@ body {
 }
 
 @keyframes pulse {
-  from { box-shadow: 0 0 4px #2ea043; }
-  to { box-shadow: 0 0 12px #2ea043; }
+  from {
+    box-shadow: 0 0 4px #2ea043;
+  }
+
+  to {
+    box-shadow: 0 0 12px #2ea043;
+  }
 }
+
+/* NODES */
 
 .react-flow__node {
   background: #11151d;
@@ -431,20 +538,28 @@ body {
   border-radius: 12px;
   padding: 14px 18px;
   color: #e6edf3;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .react-flow__node:hover {
   border-color: #3b82f6;
-  box-shadow: 0 12px 35px rgba(37, 99, 235, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 12px 35px rgba(37, 99, 235, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transform: translateY(-2px);
 }
 
 .react-flow__node.selected {
   border-color: #388bfd;
-  box-shadow: 0 0 0 1px #388bfd, 0 15px 40px rgba(56, 139, 253, 0.2);
+  box-shadow:
+    0 0 0 1px #388bfd,
+    0 15px 40px rgba(56, 139, 253, 0.2);
 }
+
+/* CONTROLS */
 
 .react-flow__controls {
   background: #11151d !important;
@@ -466,6 +581,8 @@ body {
   fill: #388bfd !important;
 }
 
+/* MINIMAP */
+
 .react-flow__minimap {
   background: #11151d !important;
   border: 1px solid #252c38 !important;
@@ -482,12 +599,34 @@ body {
   stroke: #252c38 !important;
 }
 
+/* RESPONSIVE */
+
 @media (max-width: 768px) {
+  .app {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
   .sidebar {
     width: 100%;
-    box-sizing: border-box;
+    min-width: 0;
+    height: auto;
+    max-height: 65vh;
   }
-  .connection-form {
-    gap: 8px;
+
+  .main {
+    min-height: 600px;
+    overflow: visible;
+  }
+
+  .workspace {
+    padding: 20px 15px;
+    min-height: 500px;
+  }
+
+  .topbar {
+    padding: 0 15px;
   }
 }

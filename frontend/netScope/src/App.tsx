@@ -4,6 +4,7 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
+  Controls,
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
@@ -29,13 +30,17 @@ interface Response {
     status: string;
     ports: string[];
   }[];
-  networks: {
-    id:string,
-    name: string,
-    driver: string
-    containers: []
 
-  }[]
+  networks: {
+    id: string;
+    name: string;
+    driver: string;
+    containers: {
+      id: string;
+      name: string;
+      ipv4Address: string;
+    }[];
+  }[];
 }
 
 
@@ -168,7 +173,7 @@ export default function App() {
   };
 
 
-  const getTopologyMap = async (server: Server) => {
+  const getDockerMap = async (server: Server) => {
     try {
       setError('');
 
@@ -194,25 +199,84 @@ export default function App() {
       }
 
       const data: Response = await res.json();
-      setNodes(
-        data.containers.map((container, index) => ({
-          id: container.id,
+      const containerNodes = data.containers.map((container, index) => ({
+        id: container.id,
+        position: {
+          x: 100 + (index % 3) * 220,
+          y: 50 + Math.floor(index / 3) * 200,
+        },
+        data: {
+          label: container.name,
+        },
+      }));
+
+      const networkNodes = data.networks.map((network, index) => {
+        const connectedContainer = network.containers[0];
+
+        const containerIndex = connectedContainer
+          ? data.containers.findIndex((item) =>
+            connectedContainer.id.startsWith(item.id)
+          )
+          : -1;
+
+        return {
+          id: network.id,
           position: {
-            x: 250 + (index % 3) * 200,
-            y: 50 + Math.floor(index / 3) * 150,
+            x: containerIndex !== -1
+              ? 100 + (containerIndex % 3) * 220
+              : 100 + index * 150,
+            y: containerIndex !== -1
+              ? 130 + Math.floor(containerIndex / 3) * 200
+              : 550,
           },
           data: {
-            label: container.name,
+            label: `Network: ${network.name}`,
           },
-        }))
+        };
+      });
+
+      setNodes([...containerNodes, ...networkNodes]);
+      const newEdges = data.networks.flatMap((network) =>
+        network.containers.flatMap((networkContainer) => {
+          const container = data.containers.find((item) =>
+            networkContainer.id.startsWith(item.id)
+          );
+
+          if (!container) return [];
+
+          return [{
+            id: `${container.id}-${network.id}`,
+            source: container.id,
+            target: network.id,
+            type: 'smoothstep',
+          }];
+        })
       );
-      console.log('Topology:', data);
+
+      setEdges(newEdges);
+
+      console.log('Created edges:', newEdges);
+
+      setEdges(newEdges);
+      console.log(
+        'Missing nodes:',
+        newEdges.filter(
+          (edge) =>
+            !nodes.some((node) => node.id === edge.source) ||
+            !nodes.some((node) => node.id === edge.target)
+        )
+      );
+
+
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Неизвестная ошибка'
       );
     }
   };
+  useEffect(() => {
+    console.log('React Flow edges state:', edges);
+  }, [edges]);
   const handleDeleteServer = async (serverId: string) => {
     try {
       const res = await fetch(`${API_URL}/servers/${serverId}`, {
@@ -333,49 +397,85 @@ export default function App() {
         </div>
 
         {/* SERVER LIST */}
-        <div className="servers-section">
+   <div className="servers-section">
 
-          <button
-            className="servers-toggle"
-            onClick={() => setShowServers((prev) => !prev)}
-          >
-            <span>My Servers ({servers.length})</span>
-            <span>{showServers ? '−' : '+'}</span>
-          </button>
+  <button
+    className="servers-toggle"
+    onClick={() => setShowServers((prev) => !prev)}
+  >
+    <span>My Servers ({servers.length})</span>
+    <span>{showServers ? '−' : '+'}</span>
+  </button>
 
-          {showServers && (
-            <div className="servers-list" >
+  {showServers && (
+    <div className="servers-list">
 
-              {servers.length === 0 ? (
-                <p className="empty-message">No servers added yet</p>
-              ) : (
-                servers.map((server) => (
-                  <div className="server-item" key={server.id} >
-                    <div className="server-item-icon">▣</div>
-                    <button
-                      className="btn-secondary"
-                      onClick={() => getTopologyMap(server)}
-                    >
-                      Discover
-                    </button>
+      {servers.length === 0 ? (
+        <p className="empty-message">No servers added yet</p>
+      ) : (
+        servers.map((server) => (
+          <div className="server-item" key={server.id}>
 
-                    <div>
-                      <p>{server.host}</p>
-                      <span>
-                        {server.username}@{server.host}:{server.port}
-                      </span>
-                      <button className="btn-secondary" onClick={() => handleDeleteServer(server.id)}>
-                        Удалить
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
+            <div className="server-item-icon">▣</div>
 
+            <div className="server-item-info">
+              <p>{server.host}</p>
+              <span>
+                {server.username}@{server.host}:{server.port}
+              </span>
+
+              <button
+                className="btn-secondary"
+                onClick={() => handleDeleteServer(server.id)}
+              >
+                Удалить
+              </button>
             </div>
-          )}
 
+            <button
+              className="btn-secondary"
+              onClick={() => getDockerMap(server)}
+            >
+              Docker Map
+            </button>
+
+            <button
+              className="btn-secondary"
+              onClick={() => getDockerMap(server)}
+            >
+              Nginx Map
+            </button>
+            
+
+          </div>
+        ))
+      )}
+
+      <div className="server-resources">
+
+        <div className="resource-group">
+          <h3>🐳 Docker</h3>
+          <div className="resource-item">
+            Containers
+          </div>
         </div>
+
+        <div className="resource-group">
+          <h3>🌐 Networks</h3>
+          <div className="resource-item">
+            Docker Networks
+          </div>
+          <div className="resource-item">
+            Linux Networking
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  )}
+
+</div>
 
         <div className="connection-status">
           <span className="status-dot"></span>
@@ -424,11 +524,11 @@ export default function App() {
             <ReactFlow
               nodes={nodes}
               edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
               fitView
-            />
+              fitViewOptions={{ padding: 0.3, maxZoom: 1.5 }}
+            >
+              <Controls />
+            </ReactFlow>
 
           </div>
 
